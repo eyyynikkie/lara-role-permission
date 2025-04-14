@@ -14,6 +14,9 @@ class PostController extends Controller
     {
         // Apply authentication middleware for methods that require authentication
         $this->middleware('auth')->except(['index', 'show']);
+        $this->middleware('permission:create posts')->only(['create', 'store']);
+        $this->middleware('permission:edit posts')->only(['edit', 'update']);
+        $this->middleware('permission:delete posts')->only(['destroy']);
     }
 
     public function index()
