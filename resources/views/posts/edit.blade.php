@@ -1,66 +1,47 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="text-xl font-semibold leading-tight text-gray-800">
-            {{ __('Edit Post') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
-            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <form action="{{ route('posts.update', $post) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
+@section('content')
+<div class="container mx-auto px-4 py-6">
+    <h1 class="text-2xl font-bold mb-6">Edit Post</h1>
 
-                        <div class="mb-4">
-                            <x-input-label for="title" :value="__('Title')" />
-                            <x-text-input id="title" name="title" type="text" class="block w-full mt-1"
-                                :value="old('title', $post->title)" required autofocus />
-                            <x-input-error class="mt-2" :messages="$errors->get('title')" />
-                        </div>
+    <form action="{{ route('posts.update', $post) }}" method="POST" class="space-y-6">
+        @csrf
+        @method('PUT')
 
-                        <div class="mb-4">
-                            <x-input-label for="content" :value="__('Content')" />
-                            <textarea id="content" name="content" rows="10"
-                                class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('content', $post->content) }}</textarea>
-                            <x-input-error class="mt-2" :messages="$errors->get('content')" />
-                        </div>
-
-                        <div class="mb-4">
-                            <x-input-label for="ft_image" :value="__('Featured Image')" />
-                            @if($post->ft_image)
-                                <div class="mb-2">
-                                    <img src="{{ Storage::url($post->ft_image) }}"
-                                         alt="{{ $post->title }}"
-                                         class="object-cover w-auto h-32 rounded">
-                                </div>
-                            @endif
-                            <input id="ft_image" name="ft_image" type="file"
-                                class="block w-full mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
-                            <x-input-error class="mt-2" :messages="$errors->get('ft_image')" />
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="inline-flex items-center">
-                                <input type="checkbox" name="is_published"
-                                    class="text-indigo-600 border-gray-300 rounded shadow-sm focus:ring-indigo-500"
-                                    {{ old('is_published', $post->is_published) ? 'checked' : '' }} />
-                                <span class="ml-2">{{ __('Publish Post') }}</span>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center gap-4">
-                            <x-primary-button>{{ __('Update Post') }}</x-primary-button>
-
-                            <a href="{{ route('posts.index') }}"
-                                class="inline-flex items-center px-4 py-2 text-xs font-semibold tracking-widest text-gray-700 uppercase transition duration-150 ease-in-out bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25">
-                                {{ __('Cancel') }}
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+        <div>
+            <label for="title" class="block text-sm font-semibold">Title</label>
+            <input type="text" name="title" id="title" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="{{ old('title', $post->title) }}" required>
         </div>
-    </div>
-</x-app-layout>
+
+        <div>
+            <label for="category_id" class="block text-sm font-semibold">Category</label>
+            <select name="category_id" id="category_id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                @foreach($categories as $category)
+                    <option value="{{ $category->id }}" {{ $post->category_id == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label for="tags" class="block text-sm font-semibold">Tags</label>
+            <select name="tags[]" id="tags" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" multiple>
+                @foreach($tags as $tag)
+                    <option value="{{ $tag->id }}" {{ $post->tags->contains($tag->id) ? 'selected' : '' }}>{{ $tag->name }}</option>
+                @endforeach
+            </select>
+        </div>
+
+        <div>
+            <label for="content" class="block text-sm font-semibold">Content</label>
+            <textarea name="content" id="content" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="5" required>{{ old('content', $post->content) }}</textarea>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <label for="is_published" class="text-sm font-semibold">Published</label>
+            <input type="checkbox" name="is_published" id="is_published" class="form-checkbox" value="1" {{ $post->is_published ? 'checked' : '' }}>
+        </div>
+
+        <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-md mt-4 hover:bg-blue-600">Update</button>
+    </form>
+</div>
+@endsection

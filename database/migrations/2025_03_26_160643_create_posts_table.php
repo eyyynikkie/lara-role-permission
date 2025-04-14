@@ -9,25 +9,25 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
+    public function up()
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('ft_image')->nullable();
             $table->string('slug')->unique();
-            $table->longText('content');
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->text('content');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('category_id')->constrained()->onDelete('cascade'); 
             $table->boolean('is_published')->default(false);
-            $table->date('published_at')->nullable();
+            $table->timestamp('published_at')->nullable();
+            $table->boolean('has_affiliate_links')->default(false);
+            $table->string('affiliate_disclaimer')->nullable();
+            $table->string('affiliate_product_url')->nullable();
             $table->timestamps();
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    
+    public function down()
     {
         Schema::dropIfExists('posts');
     }

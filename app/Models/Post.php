@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
@@ -17,28 +18,41 @@ class Post extends Model
         'slug',
         'content',
         'user_id',
+        'category_id',
         'is_published',
-        'published_at'
+        'published_at',
+        'has_affiliate_links',
+        'affiliate_disclaimer',
+        'affiliate_product_url' // optional
     ];
 
     protected $casts = [
         'published_at' => 'date',
-        'is_published' => 'boolean'
+        'is_published' => 'boolean',
+        'has_affiliate_links' => 'boolean'
     ];
 
-    // Automatically generate slug sa post
     public function setTitleAttribute($value)
     {
         $this->attributes['title'] = $value;
         $this->attributes['slug'] = strtolower(Str::slug($value));
     }
 
-    public function author() : BelongsTo
+    public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // Scope sa published posts
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function tags(): BelongsToMany
+    {
+        return $this->belongsToMany(Tag::class, 'post_tag');
+    }
+
     public function scopePublished($query)
     {
         return $query->where('is_published', true)
@@ -46,7 +60,6 @@ class Post extends Model
                      ->where('published_at', '<=', now());
     }
 
-    // Scope sa drafts
     public function scopeDrafts($query)
     {
         return $query->where('is_published', false);

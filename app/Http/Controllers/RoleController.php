@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use App\Models\User;
 
 class RoleController extends Controller
 {
@@ -13,9 +14,9 @@ class RoleController extends Controller
      */
     public function index()
     {
+        // Paginate the roles and eager load the permissions
         $roles = Role::with('permissions')->paginate(10);
-        $permissions = Permission::all();
-        return view('roles.index', compact('roles', 'permissions'));
+        return view('roles.index', compact('roles'));
     }
 
     /**
@@ -23,6 +24,7 @@ class RoleController extends Controller
      */
     public function create()
     {
+        // Get all permissions for creating a role
         $permissions = Permission::all();
         return view('roles.create', compact('permissions'));
     }
@@ -32,18 +34,21 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate the incoming request data
         $validatedData = $request->validate([
             'name' => 'required|unique:roles,name',
-            'permissions' => 'sometimes|array',
+            'permissions' => 'nullable|array',
             'description' => 'nullable|string|max:255'
         ]);
 
+        // Create the new role with optional description
         $role = Role::create([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'] ?? null
         ]);
 
-        if (!empty($validatedData['permissions'])) {
+        // Sync permissions if provided
+        if (isset($validatedData['permissions']) && count($validatedData['permissions']) > 0) {
             $role->syncPermissions($validatedData['permissions']);
         }
 
@@ -60,7 +65,7 @@ class RoleController extends Controller
         $role->load('permissions');
 
         // Get users with this role
-        $users = \App\Models\User::role($role->name)->paginate(10);
+        $users = User::role($role->name)->paginate(10);
 
         return view('roles.show', compact('role', 'users'));
     }
@@ -70,6 +75,7 @@ class RoleController extends Controller
      */
     public function edit(Role $role)
     {
+        // Eager load the permissions and get all available permissions
         $role->load('permissions');
         $permissions = Permission::all();
 
@@ -81,21 +87,24 @@ class RoleController extends Controller
      */
     public function update(Request $request, Role $role)
     {
+        // Validate the incoming request data
         $validatedData = $request->validate([
             'name' => 'required|unique:roles,name,' . $role->id,
-            'permissions' => 'sometimes|array',
+            'permissions' => 'nullable|array',
             'description' => 'nullable|string|max:255'
         ]);
 
+        // Update role with the validated data
         $role->update([
             'name' => $validatedData['name'],
             'description' => $validatedData['description'] ?? null
         ]);
 
-        if (!empty($validatedData['permissions'])) {
+        // Sync permissions if provided, or remove all permissions if none are selected
+        if (isset($validatedData['permissions']) && count($validatedData['permissions']) > 0) {
             $role->syncPermissions($validatedData['permissions']);
         } else {
-            $role->syncPermissions([]);
+            $role->syncPermissions([]); // Remove all permissions if none are selected
         }
 
         return redirect()->route('roles.index')
@@ -107,12 +116,13 @@ class RoleController extends Controller
      */
     public function destroy(Role $role)
     {
-        // Prevent deletion of admin role
+        // Prevent deletion of the 'admin' role
         if ($role->name === 'admin') {
             return redirect()->route('roles.index')
-                ->with('error', 'Cannot delete admin role.');
+                ->with('error', 'Cannot delete the admin role.');
         }
 
+        // Delete the role
         $role->delete();
 
         return redirect()->route('roles.index')
